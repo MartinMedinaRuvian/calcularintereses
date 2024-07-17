@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calcular Pago Mensual</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .required::after {
+      content: "*";
+      color: red;
+      margin-left: 5px;
+    }
+
+    p {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #333;
+    }
+
+    .container-resultados {
+      margin-top: 50px;
+    }
+
+    .valor-moneda {
+      font-weight: bold;
+    }
+    
+    .color-rojo {
+      color: red;
+    }
+    .color-verde {
+      color: green;
+    }
+    .color-naranja{
+      color: orange;
+    }
+    footer, a{
+      font-size: 15px;
+      text-decoration: none;
+      color: #0056b3;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <label class="required" for="valor">Ingrese el valor $</label>
+    <input id="valor" type="number" placeholder="Ingrese el valor" required> <br>
+
+    <label class="required" for="interes">Ingrese el interes Efectivo Anual (TEA)</label>
+    <input id="interes" type="number" step="0.01" placeholder="Ingrese el interes Efectivo Anual (TEA)" required> <br>
+
+    <label class="required" for="tiempo">Ingrese los años</label>
+    <input id="tiempo" type="number" placeholder="Ingrese los años" required> <br>
+
+    <label for="seguro">Valor $ seguro promedio Mensual</label>
+    <input id="seguro" type="number" placeholder="Valor $ seguro Mensual">
+
+    <label for="tasaMensual">Ingrese la Tasa Mensual Vencida (opcional)</label>
+    <input id="tasaMensual" type="number" step="0.01" placeholder="Ingrese la Tasa Mensual Vencida (opcional)"> <br>
+
+    <button onclick="calcular()">Calcular</button>
+
+    <div class="container-resultados">
+      <p id="totalmensual"></p>
+      <p id="totalmensualconseguro"></p>
+      <p id="totalpagar"></p>
+      <p id="totalintereses"></p>
+    </div>
+    <footer>
+      <a href="https://martindjmedina.com/" target="_blank">Hecho por Martin Medina <br> 2024</a>
+    </footer>
+  
+  </div>
+
+
+  <script>
+    function calcularPagoMensual(valor, interesAnual, tiempoEnAnios, tasaMensual = null) {
+      let tasaMensualDecimal;
+
+      // Si se proporciona una tasa mensual, usarla
+      if (tasaMensual !== null && !isNaN(tasaMensual)) {
+        tasaMensualDecimal = tasaMensual / 100;
+      } else {
+        // Si no se proporciona, calcularla a partir de la TEA
+        tasaMensualDecimal = Math.pow(1 + interesAnual, 1 / 12) - 1;
+      }
+
+      // Número total de pagos
+      const numeroPagos = tiempoEnAnios * 12;
+
+      // Calcular el pago mensual utilizando la fórmula de anualidad ordinaria
+      const pagoMensual = (valor * tasaMensualDecimal * Math.pow(1 + tasaMensualDecimal, numeroPagos)) /
+        (Math.pow(1 + tasaMensualDecimal, numeroPagos) - 1);
+
+      return pagoMensual;
+    }
+
+    function verFormatoMoneda(numero) {
+      const formatoMoneda = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      });
+      return formatoMoneda.format(numero);
+    }
+
+    function calcular() {
+      const valor = parseFloat(document.getElementById("valor").value);
+      const interesAnual = parseFloat(document.getElementById("interes").value) / 100; // Convertir a decimal
+      const tasaMensual = document.getElementById("tasaMensual").value ? parseFloat(document.getElementById("tasaMensual").value) : null;
+      const tiempoEnAnios = parseInt(document.getElementById("tiempo").value);
+      const valorSeguro = document.getElementById("seguro").value ? parseFloat(document.getElementById("seguro").value) : 0;
+
+      // Calcular el pago mensual
+      const pagoMensual = calcularPagoMensual(valor, interesAnual, tiempoEnAnios, tasaMensual);
+      const totalPagarMensual = parseFloat(pagoMensual.toFixed(2));
+
+      document.getElementById("totalmensual").innerHTML = `El pago mensual es de: <span class="valor-moneda">${verFormatoMoneda(totalPagarMensual)}</span>`;
+
+      const totalMensualConSeguro = totalPagarMensual + valorSeguro;
+      document.getElementById("totalmensualconseguro").innerHTML = `El pago mensual con seguro es de: <span class="valor-moneda color-verde">${verFormatoMoneda(totalMensualConSeguro)}</span>`;
+
+      const totalPagar = totalMensualConSeguro * (tiempoEnAnios * 12);
+      const totalIntereses = totalPagar - valor;
+
+      document.getElementById("totalpagar").innerHTML = `El Total Final a Pagar es de: <span class="valor-moneda color-rojo">${verFormatoMoneda(totalPagar)}</span>`;
+      document.getElementById("totalintereses").innerHTML = `El Total de intereses Final es de: <span class="valor-moneda color-naranja">${verFormatoMoneda(totalIntereses)}</span>`;
+    }
+  </script>
+
+</body>
+
+</html>
